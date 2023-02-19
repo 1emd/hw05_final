@@ -30,53 +30,61 @@ class PostFormTests(TestCase):
             slug='test-slug',
             description='Тестовое описание группы',
         )
-
         cls.user = User.objects.create_user(
             username='user_kir')
         cls.another_user = User.objects.create_user(
             username='another_user')
-
         cls.post = Post.objects.create(
             text='Тестовый пост',
             author=cls.user,
             group=cls.group,
         )
-        cls.index_urls = reverse(INDEX_URL_NAME)
-        cls.group_list_url = reverse(
+        cls.INDEX_URL_REVERSE = reverse(INDEX_URL_NAME)
+        cls.GROUP_LIST_URL_REVERSE = reverse(
             GROUP_LIST_URL_NAME,
             kwargs={'slug': cls.group.slug}
         )
-        cls.profile_url = reverse(
+        cls.PROFILE_URL_REVERSE = reverse(
             PROFILE_URL_NAME,
             kwargs={'username': cls.user}
         )
-        cls.post_detail_url = reverse(
+        cls.POST_DETAIL_URL_REVERSE = reverse(
             POST_DETAIL_URL_NAME,
             kwargs={'post_id': cls.post.id}
         )
-        cls.post_edit_url = reverse(
+        cls.POST_EDIT_URL_REVERSE = reverse(
             POST_EDIT_URL_NAME,
             kwargs={'post_id': cls.post.id}
         )
-        cls.post_create_url = reverse(POST_CREATE_URL_NAME)
+        cls.POST_CREATE_URL_REVERSE = reverse(POST_CREATE_URL_NAME)
         cls.public_urls = {
-            (cls.index_urls, INDEX_URL_TEMPLATE, HTTPStatus.OK),
-            (cls.group_list_url, GROUP_LIST_URL_TEMPLATE, HTTPStatus.OK),
-            (cls.profile_url, PROFILE_URL_TEMPLATE, HTTPStatus.OK),
-            (cls.post_detail_url, POST_DETAIL_URL_TEMPLATE, HTTPStatus.OK),
-            (cls.post_edit_url, POST_EDIT_URL_TEMPLATE, HTTPStatus.FOUND),
-            (cls.post_create_url, POST_CREATE_URL_TEMPLATE, HTTPStatus.FOUND),
+            (cls.INDEX_URL_REVERSE, INDEX_URL_TEMPLATE,
+             HTTPStatus.OK),
+            (cls.GROUP_LIST_URL_REVERSE, GROUP_LIST_URL_TEMPLATE,
+             HTTPStatus.OK),
+            (cls.PROFILE_URL_REVERSE, PROFILE_URL_TEMPLATE,
+             HTTPStatus.OK),
+            (cls.POST_DETAIL_URL_REVERSE, POST_DETAIL_URL_TEMPLATE,
+             HTTPStatus.OK),
+            (cls.POST_EDIT_URL_REVERSE, POST_EDIT_URL_TEMPLATE,
+             HTTPStatus.FOUND),
+            (cls.POST_CREATE_URL_REVERSE, POST_CREATE_URL_TEMPLATE,
+             HTTPStatus.FOUND),
         }
         cls.unex_page = {
             ('/unexisting_page/', '', HTTPStatus.NOT_FOUND)
         }
         cls.author_urls = {
-            (cls.post_edit_url, POST_EDIT_URL_TEMPLATE, HTTPStatus.OK),
-            (cls.post_create_url, POST_CREATE_URL_TEMPLATE, HTTPStatus.OK),
+            (cls.POST_EDIT_URL_REVERSE, POST_EDIT_URL_TEMPLATE,
+             HTTPStatus.OK),
+            (cls.POST_CREATE_URL_REVERSE, POST_CREATE_URL_TEMPLATE,
+             HTTPStatus.OK),
         }
         cls.auth_urls = {
-            (cls.post_edit_url, POST_EDIT_URL_TEMPLATE, HTTPStatus.FOUND),
-            (cls.post_create_url, POST_CREATE_URL_TEMPLATE, HTTPStatus.OK),
+            (cls.POST_EDIT_URL_REVERSE, POST_EDIT_URL_TEMPLATE,
+             HTTPStatus.FOUND),
+            (cls.POST_CREATE_URL_REVERSE, POST_CREATE_URL_TEMPLATE,
+             HTTPStatus.OK),
         }
 
     def setUp(self):

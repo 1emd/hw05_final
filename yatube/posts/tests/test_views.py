@@ -57,27 +57,27 @@ class PostPagesTests(TestCase):
             group=cls.group,
             image=cls.uploaded
         )
-        cls.index_reverse = reverse(INDEX_URL_NAME)
-        cls.follow_index = reverse(FOLLOW_INDEX_URL_NAME)
-        cls.group_list_reverse = reverse(
+        cls.INDEX_URL_REVERSE = reverse(INDEX_URL_NAME)
+        cls.FOLLOW_INDEX_URL_REVERSE = reverse(FOLLOW_INDEX_URL_NAME)
+        cls.GROUP_LIST_URL_REVERSE = reverse(
             GROUP_LIST_URL_NAME,
             kwargs={'slug': cls.group.slug})
-        cls.fail_group_list_reverse = reverse(
+        cls.FAIL_GROUP_LIST_URL_REVERSE = reverse(
             GROUP_LIST_URL_NAME, kwargs={'slug': cls.fail_group.slug})
-        cls.profile_reverse = reverse(
+        cls.PROFILE_URL_REVERSE = reverse(
             PROFILE_URL_NAME,
             kwargs={'username': cls.post.author})
-        cls.post_detail_reverse = reverse(
+        cls.POST_DETAIL_URL_REVERSE = reverse(
             POST_DETAIL_URL_NAME,
             kwargs={'post_id': cls.post.id})
-        cls.post_edit_reverse = reverse(
+        cls.POST_EDIT_URL_REVERSE = reverse(
             POST_EDIT_URL_NAME,
             kwargs={'post_id': cls.post.id})
-        cls.post_create_reverse = reverse(POST_CREATE_URL_NAME)
-        cls.profile_unfollow_reverse = reverse(
+        cls.POST_CREATE_URL_REVERSE = reverse(POST_CREATE_URL_NAME)
+        cls.PROFILE_UNFOLLOW_URL_REVERSE = reverse(
             PROFILE_UNFOLLOW_URL_NAME,
             kwargs={'username': cls.not_author})
-        cls.profile_follow_reverse = reverse(
+        cls.PROFILE_FOLLOW_URL_REVERSE = reverse(
             PROFILE_FOLLOW_URL_NAME,
             kwargs={'username': cls.not_author})
 
@@ -95,16 +95,16 @@ class PostPagesTests(TestCase):
 
     def test_post_in_correct_pages(self):
         """Пост отображается на необходимых страницах."""
-        adresses = [
-            self.index_reverse,
-            self.group_list_reverse,
-            self.profile_reverse,
-            self.post_detail_reverse,
-        ]
-        for adress in adresses:
-            with self.subTest(adress=adress):
-                response = self.authorized_client.get(adress)
-                if adress == self.post_detail_reverse:
+        urls_names = (
+            self.INDEX_URL_REVERSE,
+            self.GROUP_LIST_URL_REVERSE,
+            self.PROFILE_URL_REVERSE,
+            self.POST_DETAIL_URL_REVERSE,
+        )
+        for url in urls_names:
+            with self.subTest(url=url):
+                response = self.authorized_client.get(url)
+                if url == self.POST_DETAIL_URL_REVERSE:
                     post = response.context['post']
                 else:
                     post = response.context['page_obj'][0]
@@ -116,7 +116,7 @@ class PostPagesTests(TestCase):
 
     def test_groups_list_show_correct_context(self):
         """Шаблон group_list.html сформирован с правильным контекстом."""
-        response = self.authorized_client.get(self.group_list_reverse)
+        response = self.authorized_client.get(self.GROUP_LIST_URL_REVERSE)
         self.assertEqual(response.context['group'].title, self.group.title)
         self.assertEqual(
             response.context['group'].description, self.group.description
@@ -125,17 +125,17 @@ class PostPagesTests(TestCase):
 
     def test_profile_page_show_correct_context(self):
         """Шаблон profile сформирован с правильным контекстом."""
-        response = self.authorized_client.get(self.profile_reverse)
+        response = self.authorized_client.get(self.PROFILE_URL_REVERSE)
         self.assertEqual(
             response.context['author'], self.post.author)
 
     def test_forms_correct(self):
         """Шаблоны post_edit и create_post сформированы
         с правильным контекстом"""
-        urls_names = {
-            self.post_edit_reverse,
-            self.post_create_reverse
-        }
+        urls_names = (
+            self.POST_EDIT_URL_REVERSE,
+            self.POST_CREATE_URL_REVERSE
+        )
         for url in urls_names:
             with self.subTest(url=url):
                 response = self.authorized_client.get(url)
@@ -155,9 +155,9 @@ class PostPagesTests(TestCase):
         в профайле пользователя.
         """
         urls_names = (
-            self.index_reverse,
-            self.group_list_reverse,
-            self.profile_reverse
+            self.INDEX_URL_REVERSE,
+            self.GROUP_LIST_URL_REVERSE,
+            self.PROFILE_URL_REVERSE
         )
         for url in urls_names:
             with self.subTest(url=url):
@@ -166,7 +166,7 @@ class PostPagesTests(TestCase):
 
     def test_post_with_group_not_in_new_group(self):
         """Созданный пост не попал в группу, для которой не был предназначен"""
-        response = self.authorized_client.get(self.fail_group_list_reverse)
+        response = self.authorized_client.get(self.FAIL_GROUP_LIST_URL_REVERSE)
         self.assertEqual(len(response.context['page_obj']), 0)
 
     def test_caches_in_index(self):
@@ -174,23 +174,23 @@ class PostPagesTests(TestCase):
         post = Post.objects.create(
             text='Текст',
             author=self.user)
-        response = self.authorized_client.get(self.index_reverse)
+        response = self.authorized_client.get(self.INDEX_URL_REVERSE)
         post.delete()
-        response2 = self.authorized_client.get(self.index_reverse)
+        response2 = self.authorized_client.get(self.INDEX_URL_REVERSE)
         self.assertEqual(response.content, response2.content,)
         cache.clear()
-        response3 = self.authorized_client.get(self.index_reverse)
+        response3 = self.authorized_client.get(self.INDEX_URL_REVERSE)
         self.assertNotEqual(response2.content, response3.content,)
 
     def test_follow_for_auth_user(self):
         '''Авторизованный пользователь может подписываться на
         других пользователей.'''
         follow_count = Follow.objects.count()
-        response = self.authorized_client.post(self.profile_follow_reverse)
+        response = self.authorized_client.post(self.PROFILE_FOLLOW_URL_REVERSE)
         follow = Follow.objects.all().latest('id')
         self.assertRedirects(
             response,
-            self.follow_index
+            self.FOLLOW_INDEX_URL_REVERSE
         )
         self.assertEqual(Follow.objects.count(), follow_count + 1)
         self.assertEqual(follow.author.id, self.not_author.id)
@@ -202,8 +202,9 @@ class PostPagesTests(TestCase):
             user=self.user,
             author=self.not_author)
         follow_count = Follow.objects.count()
-        response = self.authorized_client.post(self.profile_unfollow_reverse)
-        self.assertRedirects(response, self.follow_index)
+        response = self.authorized_client.post(
+            self.PROFILE_UNFOLLOW_URL_REVERSE)
+        self.assertRedirects(response, self.FOLLOW_INDEX_URL_REVERSE)
         self.assertEqual(Follow.objects.count(), follow_count - 1)
 
     def test_follow_or_not_on_authors(self):
@@ -212,9 +213,9 @@ class PostPagesTests(TestCase):
         Follow.objects.create(
             user=self.user,
             author=self.post.author)
-        response = self.authorized_client.get(self.follow_index)
+        response = self.authorized_client.get(self.FOLLOW_INDEX_URL_REVERSE)
         self.assertIn(self.post, response.context['page_obj'])
-        response2 = self.another_client.get(self.follow_index)
+        response2 = self.another_client.get(self.FOLLOW_INDEX_URL_REVERSE)
         self.assertNotIn(self.post, response2.context['page_obj'])
 
 
@@ -228,11 +229,11 @@ class PaginatorViewsTest(TestCase):
             slug='test_group',
             description='Тестовое описание',
         )
-        cls.index_reverse = reverse(INDEX_URL_NAME)
-        cls.group_list_reverse = reverse(
+        cls.INDEX_URL_REVERSE = reverse(INDEX_URL_NAME)
+        cls.GROUP_LIST_URL_REVERSE = reverse(
             GROUP_LIST_URL_NAME,
             kwargs={'slug': cls.group.slug})
-        cls.profile_reverse = reverse(
+        cls.PROFILE_URL_REVERSE = reverse(
             PROFILE_URL_NAME,
             kwargs={'username': cls.user.username})
         cls.posts: list = []
@@ -249,9 +250,9 @@ class PaginatorViewsTest(TestCase):
         """Проверка: количество постов на
         index, group_list, profile равно 10 и 3."""
         urls_names = (
-            self.index_reverse,
-            self.group_list_reverse,
-            self.profile_reverse
+            self.INDEX_URL_REVERSE,
+            self.GROUP_LIST_URL_REVERSE,
+            self.PROFILE_URL_REVERSE
         )
         for url in urls_names:
             with self.subTest(url=url):

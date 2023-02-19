@@ -36,13 +36,13 @@ class Post(models.Model):
         blank=True,
     )
 
-    def __str__(self):
-        return self.text[:LIMIT]
-
     class Meta:
         ordering = ('-pub_date',)
         verbose_name_plural = 'Посты'
         verbose_name = 'Пост'
+
+    def __str__(self):
+        return self.text[:LIMIT]
 
 
 class Group(models.Model):
@@ -50,12 +50,12 @@ class Group(models.Model):
     slug = models.SlugField(unique=True)
     description = models.TextField(verbose_name='Описание группы')
 
-    def __str__(self):
-        return self.title
-
     class Meta:
         verbose_name = 'Группа'
         verbose_name_plural = 'Группы'
+
+    def __str__(self):
+        return self.title
 
 
 class Comment(models.Model):
@@ -76,13 +76,13 @@ class Comment(models.Model):
         auto_now_add=True,
         verbose_name='Дата комментария')
 
-    def __str__(self):
-        return self.text[:LIMIT]
-
     class Meta:
         ordering = ('-created',)
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        return self.text[:LIMIT]
 
 
 class Follow(models.Model):

@@ -46,18 +46,18 @@ class PostCreateFormTests(TestCase):
             content=IMAGE_PNG,
             content_type='image/png'
         )
-        cls.profile_reverse = reverse(
+        cls.PROFILE_URL_REVERSE = reverse(
             PROFILE_URL_NAME,
             kwargs={'username': cls.post.author})
-        cls.post_create_reverse = reverse(POST_CREATE_URL_NAME)
-        cls.post_edit_reverse = reverse(
+        cls.POST_CREATE_URL_REVERSE = reverse(POST_CREATE_URL_NAME)
+        cls.POST_EDIT_URL_REVERSE = reverse(
             POST_EDIT_URL_NAME,
             kwargs={'post_id': cls.post.id})
-        cls.post_detail_reverse = reverse(
+        cls.POST_DETAIL_URL_REVERSE = reverse(
             POST_DETAIL_URL_NAME,
             kwargs={'post_id': cls.post.id})
-        cls.login_reverse = reverse('login') + '?next='
-        cls.post_comment_reverse = reverse(
+        cls.LOGIN_URL_REVERSE = reverse('login') + '?next='
+        cls.POST_COMMENT_URL_REVERSE = reverse(
             POST_COMMENT_URL_NAME,
             kwargs={'post_id': cls.post.id})
 
@@ -80,11 +80,11 @@ class PostCreateFormTests(TestCase):
             'image': self.uploaded,
         }
         response = self.authorized_client.post(
-            self.post_create_reverse,
+            self.POST_CREATE_URL_REVERSE,
             data=form_data,
             follow=True
         )
-        self.assertRedirects(response, self.profile_reverse)
+        self.assertRedirects(response, self.PROFILE_URL_REVERSE)
         self.assertEqual(Post.objects.count(), posts_count + 1)
         new_post = Post.objects.latest('id')
         self.assertEqual(form_data['text'], new_post.text)
@@ -101,13 +101,13 @@ class PostCreateFormTests(TestCase):
             'image': self.new_uploaded,
         }
         response = self.authorized_client.post(
-            self.post_edit_reverse,
+            self.POST_EDIT_URL_REVERSE,
             data=form_data,
             follow=True
         )
         self.assertRedirects(
             response,
-            self.post_detail_reverse
+            self.POST_DETAIL_URL_REVERSE
         )
         new_post = Post.objects.latest('id')
         self.assertEqual(form_data['text'], new_post.text)
@@ -123,12 +123,12 @@ class PostCreateFormTests(TestCase):
             'group': self.group.id,
         }
         response = self.guest.post(
-            self.post_create_reverse,
+            self.POST_CREATE_URL_REVERSE,
             data=form_data,
             follow=True
         )
         self.assertRedirects(
-            response, self.login_reverse + self.post_create_reverse)
+            response, self.LOGIN_URL_REVERSE + self.POST_CREATE_URL_REVERSE)
         self.assertEqual(Post.objects.count(), posts_count)
 
     def test_not_auth_user_post_edit(self):
@@ -138,12 +138,12 @@ class PostCreateFormTests(TestCase):
             'text': 'Пост отредактирован гостем',
         }
         response = self.guest.post(
-            self.post_edit_reverse,
+            self.POST_EDIT_URL_REVERSE,
             data=form_data, follow=True
         )
         post = Post.objects.latest('id')
         self.assertRedirects(
-            response, self.login_reverse + self.post_edit_reverse
+            response, self.LOGIN_URL_REVERSE + self.POST_EDIT_URL_REVERSE
         )
         self.assertNotEqual(form_data['text'], post.text)
 
@@ -152,28 +152,28 @@ class PostCreateFormTests(TestCase):
         comments_count = Comment.objects.count()
         form_data = {'text': 'Тестовый коментарий'}
         response = self.guest.post(
-            self.post_comment_reverse,
+            self.POST_COMMENT_URL_REVERSE,
             data=form_data,
             follow=True)
         self.assertEqual(Comment.objects.count(), comments_count)
         self.assertRedirects(
-            response, self.login_reverse + self.post_comment_reverse
+            response, self.LOGIN_URL_REVERSE + self.POST_COMMENT_URL_REVERSE
         )
 
     def test_auth_user_add_comment(self):
         '''Комментировать посты может авторизованный пользователь,
         после успешной отправки комментарий появляется на странице поста.'''
         comments_count = Comment.objects.count()
-        form_text = {'text': 'Тестовый текст'}
+        form_data = {'text': 'Тестовый текст'}
         response_comm = self.authorized_client.post(
-            self.post_comment_reverse,
-            data=form_text,
+            self.POST_COMMENT_URL_REVERSE,
+            data=form_data,
             follow=True)
         self.assertRedirects(
-            response_comm, self.post_detail_reverse
+            response_comm, self.POST_DETAIL_URL_REVERSE
         )
         self.assertEqual(Comment.objects.count(), comments_count + 1)
         comment = Comment.objects.latest('id')
-        self.assertEqual(form_text['text'], comment.text)
+        self.assertEqual(form_data['text'], comment.text)
         self.assertEqual(self.user, comment.author)
         self.assertEqual(self.post.id, comment.post_id)
