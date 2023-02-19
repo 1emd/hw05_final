@@ -12,11 +12,9 @@ from .constants import (
     POST_DETAIL_URL_NAME,
     POST_EDIT_URL_NAME,
     POST_CREATE_URL_NAME,
-    POST_COMMENT_URL_NAME
-
+    POST_COMMENT_URL_NAME,
+    IMAGE_PNG,
 )
-
-PAGE_COUNT = 1
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
@@ -38,6 +36,30 @@ class PostCreateFormTests(TestCase):
             group=cls.group,
         )
         cls.form = PostForm()
+        cls.uploaded = SimpleUploadedFile(
+            name='image.png',
+            content=IMAGE_PNG,
+            content_type='image/png'
+        )
+        cls.new_uploaded = SimpleUploadedFile(
+            name='image2.png',
+            content=IMAGE_PNG,
+            content_type='image/png'
+        )
+        cls.profile_reverse = reverse(
+            PROFILE_URL_NAME,
+            kwargs={'username': cls.post.author})
+        cls.post_create_reverse = reverse(POST_CREATE_URL_NAME)
+        cls.post_edit_reverse = reverse(
+            POST_EDIT_URL_NAME,
+            kwargs={'post_id': cls.post.id})
+        cls.post_detail_reverse = reverse(
+            POST_DETAIL_URL_NAME,
+            kwargs={'post_id': cls.post.id})
+        cls.login_reverse = reverse('login') + '?next='
+        cls.post_comment_reverse = reverse(
+            POST_COMMENT_URL_NAME,
+            kwargs={'post_id': cls.post.id})
 
     @classmethod
     def tearDownClass(cls):
@@ -47,99 +69,110 @@ class PostCreateFormTests(TestCase):
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        self.guest = Client()
 
     def test_create_post(self):
         """Валидная форма создает запись в Posts с картинкой."""
-        image_png = (
-            b'\x47\x49\x46\x38\x39\x61\x02\x00'
-            b'\x01\x00\x80\x00\x00\x00\x00\x00'
-            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-            b'\x0A\x00\x3B'
-        )
-        uploaded = SimpleUploadedFile(
-            name='image.png',
-            content=image_png,
-            content_type='image/png'
-        )
         posts_count = Post.objects.count()
         form_data = {
             'text': 'Тестовый текст',
             'group': self.group.id,
-            'image': uploaded,
+            'image': self.uploaded,
         }
         response = self.authorized_client.post(
-            reverse(POST_CREATE_URL_NAME),
+            self.post_create_reverse,
             data=form_data,
             follow=True
         )
-        self.assertRedirects(response, reverse(
-            PROFILE_URL_NAME,
-            kwargs={'username': self.post.author}))
-        self.assertEqual(Post.objects.count(), posts_count + PAGE_COUNT)
+        self.assertRedirects(response, self.profile_reverse)
+        self.assertEqual(Post.objects.count(), posts_count + 1)
         new_post = Post.objects.latest('id')
         self.assertEqual(form_data['text'], new_post.text)
         self.assertEqual(form_data['group'], new_post.group.id)
-        self.assertEqual('posts/image.png', new_post.image.name)
+        self.assertEqual(
+            form_data['image'].name, new_post.image.name.split('/')[1])
 
     def test_post_edit(self):
         """При отправке валидной формы со страницы редактирования поста
         происходит изменение поста с картинкой"""
-        test_image = (
-            b'\x47\x49\x46\x38\x39\x61\x02\x00'
-            b'\x01\x00\x80\x00\x00\x00\x00\x00'
-            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-            b'\x0A\x00\x3B'
-        )
-        uploaded = SimpleUploadedFile(
-            name='red_image.png',
-            content=test_image,
-            content_type='image/png'
-        )
         form_data = {
             'text': 'Изменить текст.',
             'group': self.group.id,
-            'image': uploaded,
+            'image': self.new_uploaded,
         }
         response = self.authorized_client.post(
-            reverse(
-                POST_EDIT_URL_NAME,
-                kwargs={'post_id': self.post.id}),
+            self.post_edit_reverse,
             data=form_data,
             follow=True
         )
         self.assertRedirects(
             response,
-            reverse(
-                POST_DETAIL_URL_NAME,
-                kwargs={'post_id': self.post.id})
+            self.post_detail_reverse
         )
         new_post = Post.objects.latest('id')
         self.assertEqual(form_data['text'], new_post.text)
         self.assertEqual(form_data['group'], new_post.group.id)
-        self.assertEqual('posts/red_image.png', new_post.image.name)
+        self.assertEqual(
+            form_data['image'].name, new_post.image.name.split('/')[1])
+
+    def test_not_auth_user_create_post(self):
+        '''Невозможность создания поста не авторизированным пользователем.'''
+        posts_count = Post.objects.count()
+        form_data = {
+            'text': 'Текст поста',
+            'group': self.group.id,
+        }
+        response = self.guest.post(
+            self.post_create_reverse,
+            data=form_data,
+            follow=True
+        )
+        self.assertRedirects(
+            response, self.login_reverse + self.post_create_reverse)
+        self.assertEqual(Post.objects.count(), posts_count)
+
+    def test_not_auth_user_post_edit(self):
+        '''Невозможность редактирования поста
+        не авторизированным пользователем.'''
+        form_data = {
+            'text': 'Пост отредактирован гостем',
+        }
+        response = self.guest.post(
+            self.post_edit_reverse,
+            data=form_data, follow=True
+        )
+        post = Post.objects.latest('id')
+        self.assertRedirects(
+            response, self.login_reverse + self.post_edit_reverse
+        )
+        self.assertNotEqual(form_data['text'], post.text)
+
+    def test_not_auth_user_add_comment(self):
+        '''Не авторизованный пользователь не может комментировать посты'''
+        comments_count = Comment.objects.count()
+        form_data = {'text': 'Тестовый коментарий'}
+        response = self.guest.post(
+            self.post_comment_reverse,
+            data=form_data,
+            follow=True)
+        self.assertEqual(Comment.objects.count(), comments_count)
+        self.assertRedirects(
+            response, self.login_reverse + self.post_comment_reverse
+        )
 
     def test_auth_user_add_comment(self):
-        '''Комментировать посты может только авторизованный пользователь,
+        '''Комментировать посты может авторизованный пользователь,
         после успешной отправки комментарий появляется на странице поста.'''
         comments_count = Comment.objects.count()
         form_text = {'text': 'Тестовый текст'}
         response_comm = self.authorized_client.post(
-            reverse(
-                POST_COMMENT_URL_NAME,
-                kwargs={'post_id': self.post.id}),
+            self.post_comment_reverse,
             data=form_text,
             follow=True)
         self.assertRedirects(
-            response_comm,
-            reverse(
-                POST_DETAIL_URL_NAME,
-                kwargs={'post_id': self.post.id})
+            response_comm, self.post_detail_reverse
         )
-        self.assertEqual(Comment.objects.count(), comments_count + PAGE_COUNT)
+        self.assertEqual(Comment.objects.count(), comments_count + 1)
         comment = Comment.objects.latest('id')
         self.assertEqual(form_text['text'], comment.text)
         self.assertEqual(self.user, comment.author)

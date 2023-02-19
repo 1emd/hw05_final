@@ -13,7 +13,7 @@
     </p>
     {% for post in page_obj %}
       <article>
-        {% include 'includes/article.html' %}
+        {% include 'includes/article.html' with dont_show_group=True %}
       </article>
       {% if not forloop.last %}<hr>{% endif %}     
     {% endfor %}

@@ -158,3 +158,7 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
+
+# Posts count
+
+POSTS_PER_PAGE = 10

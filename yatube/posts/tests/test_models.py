@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from posts.models import Group, Post, User, LIMIT
+from posts.models import Group, Post, User, Comment, Follow, LIMIT
 
 
 class PostAndGroupModelTest(TestCase):
@@ -8,6 +8,7 @@ class PostAndGroupModelTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='kir')
+        cls.user2 = User.objects.create_user(username='user2')
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='test-slug',
@@ -17,12 +18,25 @@ class PostAndGroupModelTest(TestCase):
             author=cls.user,
             text='Тестовый пост',
         )
+        cls.comment = Comment.objects.create(
+            text='Комментарий',
+            author=cls.user,
+            post=cls.post,
+        )
+        cls.follow = Follow.objects.create(
+            user=cls.user,
+            author=cls.user2,
+        )
 
     def test_models_have_correct_object_names(self):
-        """Проверяем, что у моделей Post и Group корректно работает __str__."""
+        """Проверяем, что у моделей Post, Group, Comment, Follow
+        корректно работает __str__."""
         test_models = (
             (str(self.post), self.post.text[:LIMIT]),
             (str(self.group), self.group.title),
+            (str(self.comment), self.comment.text[:LIMIT]),
+            (str(self.follow), f'{self.follow.user} '
+             f'подписан на {self.follow.author}')
         )
         for field, expected_value in test_models:
             with self.subTest(field=field):
@@ -35,6 +49,7 @@ class PostAndGroupModelTest(TestCase):
             'pub_date': 'Дата публикации',
             'author': 'Автор',
             'group': 'Группа',
+            'image': 'Картинка',
         }
         for field, expected_value in field_verboses.items():
             with self.subTest(field=field):

@@ -7,7 +7,7 @@
     <h1>
       {{ "Подписка на пользователя" }}
     </h1>
-    {% include 'includes/switcher.html' %}
+    {% include 'includes/switcher.html' with follow=True %}
     {% for post in page_obj %}
       <article> <!-- ссылку на подр. инф. добавил в includes/article -->
         {% include 'includes/article.html' %}
