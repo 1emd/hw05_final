@@ -7,8 +7,8 @@
 
 1. Клонируйте репозиторий и перейдите в него в командной строке:
   ```
-  git clone git@github.com:1emd/hw02_community.git
-  cd hw02_community
+  git clone git@github.com:1emd/hw05_final.git
+  cd hw05_final
   ```
 2. Создайте и активируйте виртуальное окружение:
   ```
