@@ -1,3 +1,54 @@
-# hw05_final
+# hw05_final. Пятый проект блога-платформы «Социальная сеть блогеров».
 
-[![CI](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml)
+### Описание:
+Пятый проект для блога-платформы «Социальная сеть блогеров». Данный проект позволяет пользователям публиковать собственные заметки и прикреплять к ним фотографии или другие изображения. Кроме того, пользователи могут просматривать и комментировать заметки других пользователей, а также подписываться на авторов, которые им нравятся. Реализован бэкенд системы и написаны соответствующие тесты для его проверки. Кроме того, были созданы шаблоны с использованием HTML/CSS.
+
+### Инструкция по установке:
+
+1. Клонируйте репозиторий и перейдите в него в командной строке:
+  ```
+  git clone git@github.com:1emd/hw02_community.git
+  cd hw02_community
+  ```
+2. Создайте и активируйте виртуальное окружение:
+  ```
+  python3 -m venv venv
+  ```
+- Linux/macOS:
+
+  ```
+  source venv/bin/activate
+  ```
+
+- Windows:
+  ```
+  source env/scripts/activate
+  ```
+
+3. Установите зависимости из файла requirements.txt:
+  ```
+  pip install -r requirements.txt
+  ```
+
+4. Выполните миграции:
+  ```
+  python3 manage.py migrate
+  ```
+
+5. Выполните тестирование(опционально):
+  ```
+  python3 manage.py test
+  ```
+
+6. Запустите проект:
+  ```
+  python3 manage.py runserver
+  ```
+
+### Технологии:
+
+- Python 3.9
+- Django 2.2.9
+
+### Автор:
+[Кирилл Хорошилов](https://github.com/1emd)
